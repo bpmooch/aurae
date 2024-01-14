@@ -35,8 +35,8 @@ uid           =  $(shell id -u)
 uname_m       =  $(shell uname -m)
 oci_engine    =  docker
 oci_opts      =  DOCKER_BUILDKIT=1
-oci_file      =  images/Dockerfile.test
-oci_tag       =  aurae/test:latest
+oci_file      =  images/Dockerfile.dev
+oci_tag       =  aurae/dev:latest
 cri_version   =  release-1.26
 clh_version   =  30.0
 vm_kernel     =  6.1.6
