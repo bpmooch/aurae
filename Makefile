@@ -101,6 +101,9 @@ build: musl auraed-build auraed-lint not-auraed-build not-auraed-lint ## Build a
 .PHONY: install
 install: musl lint test auraed-debug auraescript-debug aer-debug ## Lint, test, and install (debug) 🎉
 
+.PHONY: slim-install
+slim-install: musl auraed-lint auraed-debug
+
 .PHONY: docs
 docs: docs-crates docs-stdlib docs-other ## Assemble all the /docs for the website locally.
 
@@ -232,7 +235,7 @@ $(1)-build-release: musl $(GEN_RS) $(GEN_TS)
 
 .PHONY: $(1)-debug
 $(1)-debug: musl $(GEN_RS) $(GEN_TS) $(1)-lint
-	$(cargo) install $(2) --path ./$(1) --debug --force
+	$(cargo) install $(2) --path ./$(1)
 
 .PHONY: $(1)-release
 $(1)-release: musl $(GEN_RS) $(GEN_TS) $(1)-lint $(1)-test ## Lint, test, and install $(1)
