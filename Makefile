@@ -31,18 +31,20 @@
 branch       ?=  main
 message      ?=  Default commit message. Aurae Runtime environment.
 cargo         =  cargo
-oci           =  docker
-ociopts       =  DOCKER_BUILDKIT=1
 uid           =  $(shell id -u)
 uname_m       =  $(shell uname -m)
+oci_engine    =  docker
+oci_opts      =  DOCKER_BUILDKIT=1
+oci_file      =  images/Dockerfile.test
+oci_tag       =  aurae/test:latest
 cri_version   =  release-1.26
-clh_version   = 30.0
-vm_kernel     = 6.1.6
-vm_image      = https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
+clh_version   =  30.0
+vm_kernel     =  6.1.6
+vm_image      =  https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img
 ifeq ($(uid), 0)
-root_cargo    = cargo
+root_cargo    =  cargo
 else
-root_cargo    = sudo -E cargo
+root_cargo    =  sudo -E cargo
 endif
 
 # Configuration Options
@@ -339,24 +341,20 @@ endif
 # Container Commands
 
 .PHONY: oci-image-build
-oci-image-build: ## Build the aurae/auraed OCI images
-	$(ociopts) $(oci) build -t $(tag) -f $(ocifile) $(flags) .
+oci-build: ## Build the aurae/auraed OCI images
+	$(oci_opts) $(oci_engine) build -t $(oci_tag) -f $(oci_file) $(oci_flags) .
 
 .PHONY: oci-run
 oci-run: ## Run the aurae/auraed OCI images
-	$(ociopts) $(oci) run -v $(shell pwd):/app $(flags) $(tag) $(command)
+	$(oci_opts) $(oci_engine) run -v $(shell pwd):/app $(oci_flags) $(oci_tag) $(oci_command)
 
 .PHONY: oci-make
 oci-make: ## Run the makefile inside the aurae/auraed OCI images
-	$(ociopts) $(oci) run -v $(shell pwd):/app --rm -it $(tag) $(command)
+	$(oci_opts) $(oci_engine) run -v $(shell pwd):/app --rm -it $(oci_tag) $(oci_command)
 
 .PHONY: oci-push
 oci-push: ## Push to a user repository
-	$(ociopts) $(oci) push $(tag)
-
-.PHONY: oci-image-build-raw
-oci-image-build-raw: ## Plain Jane oci build
-	$(oci) build -t $(tag) -f $(ocifile) $(flags) .
+	$(oci_opts) $(oci_engine) push $(tag)
 
 .PHONY: container
 container: ## Build the container defined in hack/container

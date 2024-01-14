@@ -43,6 +43,7 @@ ARG CACHE_VERSION=v0
 ARG BUF_VERSION=1.25.0
 ARG PROTOC_VERSION=1.5.1
 ARG GH_CLI_VERSION=2.21.2
+ARG ARCH=amd64
 
 ## Install packages
 #
@@ -76,23 +77,23 @@ RUN rustup component add clippy
 RUN rustup target add x86_64-unknown-linux-musl
 
 ## Setup protoc-gen-doc
-RUN curl  -O -J -L https://github.com/pseudomuto/protoc-gen-doc/releases/download/v${PROTOC_VERSION}/protoc-gen-doc_${PROTOC_VERSION}_linux_amd64.tar.gz && \
-    tar -xzf protoc-gen-doc_${PROTOC_VERSION}_linux_amd64.tar.gz && \
+RUN curl  -O -J -L https://github.com/pseudomuto/protoc-gen-doc/releases/download/v${PROTOC_VERSION}/protoc-gen-doc_${PROTOC_VERSION}_linux_${ARCH}.tar.gz && \
+    tar -xzf protoc-gen-doc_${PROTOC_VERSION}_linux_${ARCH}.tar.gz && \
     chmod +x protoc-gen-doc && \
     mv protoc-gen-doc /usr/local/bin/protoc-gen-doc && \
-    rm protoc-gen-doc_${PROTOC_VERSION}_linux_amd64.tar.gz
+    rm protoc-gen-doc_${PROTOC_VERSION}_linux_${ARCH}.tar.gz
 
 ## Setup Buf
 RUN curl -sSL \
-    "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-$(uname -s)-$(uname -m)" \
+    "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-${ARCH}-${ARCH}" \
     -o "/usr/local/bin/buf" && \
     chmod +x "/usr/local/bin/buf"
 
 ## Install GH CLI
 RUN curl -sSL \
-    "https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_amd64.deb" \
-    -o "/tmp/gh_${GH_CLI_VERSION}_linux_amd64.deb" && \
-    dpkg -i "/tmp/gh_${GH_CLI_VERSION}_linux_amd64.deb" && \
-    rm "/tmp/gh_${GH_CLI_VERSION}_linux_amd64.deb"
+    "https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_${ARCH}.deb" \
+    -o "/tmp/gh_${GH_CLI_VERSION}_linux_${ARCH}.deb" && \
+    dpkg -i "/tmp/gh_${GH_CLI_VERSION}_linux_${ARCH}.deb" && \
+    rm "/tmp/gh_${GH_CLI_VERSION}_linux_${ARCH}.deb"
 
 WORKDIR /aurae

@@ -43,6 +43,7 @@ ARG CACHE_VERSION=v0
 ARG BUF_VERSION=1.25.0
 ARG VALE_VERSION=2.21.3
 ARG PROTOC_VERSION=1.5.1
+ARG ARCH=amd64
 
 ## Install packages
 RUN  apt-get update && \
@@ -64,11 +65,11 @@ RUN rustup +nightly target add x86_64-unknown-linux-musl
 RUN rustup target add x86_64-unknown-linux-musl
 
 ## Setup protoc-gen-doc
-RUN curl  -O -J -L https://github.com/pseudomuto/protoc-gen-doc/releases/download/v${PROTOC_VERSION}/protoc-gen-doc_${PROTOC_VERSION}_linux_amd64.tar.gz && \
-    tar -xzf protoc-gen-doc_${PROTOC_VERSION}_linux_amd64.tar.gz && \
+RUN curl  -O -J -L https://github.com/pseudomuto/protoc-gen-doc/releases/download/v${PROTOC_VERSION}/protoc-gen-doc_${PROTOC_VERSION}_linux_${ARCH}.tar.gz && \
+    tar -xzf protoc-gen-doc_${PROTOC_VERSION}_linux_${ARCH}.tar.gz && \
     chmod +x protoc-gen-doc && \
     mv protoc-gen-doc /usr/local/bin/protoc-gen-doc && \
-    rm protoc-gen-doc_${PROTOC_VERSION}_linux_amd64.tar.gz
+    rm protoc-gen-doc_${PROTOC_VERSION}_linux_${ARCH}.tar.gz
 
 ## Setup Buf
 RUN curl -sSL \
@@ -77,6 +78,7 @@ RUN curl -sSL \
     chmod +x "/usr/local/bin/buf"
 
 ## Setup Vale
+# FIXME: how to get 64-bit from uname -m for different arch dependencies?
 RUN curl -sSl -J -L "https://github.com/errata-ai/vale/releases/download/v${VALE_VERSION}/vale_${VALE_VERSION}_Linux_64-bit.tar.gz" \
     -o vale.tar.gz && \
     tar -xvzf vale.tar.gz -C bin && \
