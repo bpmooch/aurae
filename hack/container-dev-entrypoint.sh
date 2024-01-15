@@ -1,3 +1,4 @@
+#!/bin/bash
 # ---------------------------------------------------------------------------- #
 #        Apache 2.0 License Copyright © 2022-2023 The Aurae Authors            #
 #                                                                              #
@@ -27,68 +28,12 @@
 #   limitations under the License.                                             #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
-#
-#
-# syntax = docker/dockerfile:1.4
-FROM rust:1.72-slim-bullseye as main
-LABEL org.opencontainers.image.source https://github.com/aurae-runtime/aurae
 
-## Define ARGs
-ARG CACHE_VERSION=v0
-ARG BUF_VERSION=1.25.0
-ARG VALE_VERSION=2.21.3
-ARG PROTOC_VERSION=1.5.1
-ARG ARCH=amd64
+if [ $# -eq 0 ]; then
+    # if no args are passed in, start an interactive shell
+    exec /bin/bash
+else
+    # else run the command passed in as arguments
+    exec "$@"
+fi
 
-## Install packages
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    build-essential \
-    ca-certificates \
-    curl \
-    clang \
-    llvm \
-    libclang-dev \
-    libdbus-1-dev \
-    libseccomp-dev \
-    musl-tools \
-    pkg-config \
-    protobuf-compiler \
-    git \
-    cmake \
-    gettext \
-    && rm -rf /var/lib/apt/lists/*
-
-## Install neovim
-RUN git clone https://github.com/neovim/neovim.git /neovim && \
-  cd /neovim && \
-  make CMAKE_BUILD_TYPE=RelWithDebInfo && \
-  make install && \
-  rm -rf "$build_prefix"
-VOLUME /root/.config/nvim
-
-## Setup Rust
-RUN rustup component add clippy
-
-## Setup Buf
-RUN curl -sSL \
-    "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-$(uname -s)-$(uname -m)" \
-    -o "/usr/local/bin/buf" && \
-    chmod +x "/usr/local/bin/buf"
-
-## Required for building ring turns out
-ENV CC_aarch64_unknown_linux_musl=clang
-ENV AR_aarch64_unknown_linux_musl=llvm-ar
-ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld"
-
-# Copy the source code to the container image
-VOLUME /aurae
-WORKDIR /aurae
-ENV PKG_CONFIG_SYSROOT_DIR=/usr/lib/
-
-COPY hack/container-dev-entrypoint.sh /bin/container-dev-entrypoint.sh
-RUN chmod +x /bin/container-dev-entrypoint.sh
-ENTRYPOINT ["/bin/container-dev-entrypoint.sh"]
-
-# By default, start an interactive bash shell
-CMD ["/bin/bash"]

@@ -95,6 +95,9 @@ test: musl auraed-build auraed-lint auraed-test not-auraed-build not-auraed-lint
 .PHONY: test-all
 test-all: musl auraed-build auraed-lint auraed-test-all not-auraed-build not-auraed-lint not-auraed-test-all ## Run lints and tests (includes ignored tests)
 
+.PHONY: slim-test
+slim-test: musl auraed-test
+
 .PHONY: build
 build: musl auraed-build auraed-lint not-auraed-build not-auraed-lint ## Build and lint
 
@@ -343,8 +346,16 @@ endif
 
 # Container Commands
 
-.PHONY: oci-image-build
-oci-build: ## Build the aurae/auraed OCI images
+.PHONY: oci-dev
+oci-dev: ## Start a interactive dev container with a minimal development environment
+	./hack/container-dev $(oci_command)
+
+.PHONY: oci-test
+oci-test: ## Runs tests using the dev container
+	./hack/container-dev make auraed-test
+
+.PHONY: oci-build
+oci-build: ## Build docker images
 	$(oci_opts) $(oci_engine) build -t $(oci_tag) -f $(oci_file) $(oci_flags) .
 
 .PHONY: oci-run

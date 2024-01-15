@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # ---------------------------------------------------------------------------- #
 #        Apache 2.0 License Copyright © 2022-2023 The Aurae Authors            #
 #                                                                              #
@@ -27,68 +28,55 @@
 #   limitations under the License.                                             #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
-#
-#
-# syntax = docker/dockerfile:1.4
-FROM rust:1.72-slim-bullseye as main
-LABEL org.opencontainers.image.source https://github.com/aurae-runtime/aurae
 
-## Define ARGs
-ARG CACHE_VERSION=v0
-ARG BUF_VERSION=1.25.0
-ARG VALE_VERSION=2.21.3
-ARG PROTOC_VERSION=1.5.1
-ARG ARCH=amd64
+# validate pki
 
-## Install packages
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    build-essential \
-    ca-certificates \
-    curl \
-    clang \
-    llvm \
-    libclang-dev \
-    libdbus-1-dev \
-    libseccomp-dev \
-    musl-tools \
-    pkg-config \
-    protobuf-compiler \
-    git \
-    cmake \
-    gettext \
-    && rm -rf /var/lib/apt/lists/*
+line_break() {
+  echo '-----------------------------------------------------------------------'
+}
 
-## Install neovim
-RUN git clone https://github.com/neovim/neovim.git /neovim && \
-  cd /neovim && \
-  make CMAKE_BUILD_TYPE=RelWithDebInfo && \
-  make install && \
-  rm -rf "$build_prefix"
-VOLUME /root/.config/nvim
+# determines if a container is running
+is_container_not_running() {
+    [[ "$(docker inspect -f '{{.State.Running}}' "$1" 2>/dev/null)" == "false" ]]
+}
 
-## Setup Rust
-RUN rustup component add clippy
+container_name='aurae-dev'
 
-## Setup Buf
-RUN curl -sSL \
-    "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-$(uname -s)-$(uname -m)" \
-    -o "/usr/local/bin/buf" && \
-    chmod +x "/usr/local/bin/buf"
+# start, run, and exec as appropriate to maximize container reuse
+if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+  echo "executing command in the existing dev container"
 
-## Required for building ring turns out
-ENV CC_aarch64_unknown_linux_musl=clang
-ENV AR_aarch64_unknown_linux_musl=llvm-ar
-ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld"
-
-# Copy the source code to the container image
-VOLUME /aurae
-WORKDIR /aurae
-ENV PKG_CONFIG_SYSROOT_DIR=/usr/lib/
-
-COPY hack/container-dev-entrypoint.sh /bin/container-dev-entrypoint.sh
-RUN chmod +x /bin/container-dev-entrypoint.sh
-ENTRYPOINT ["/bin/container-dev-entrypoint.sh"]
-
-# By default, start an interactive bash shell
-CMD ["/bin/bash"]
+  if is_container_not_running "$container_name" ; then
+    echo "$container_name was stopped, restarting..."
+    if [ $# -eq 0 ] ; then
+      echo 'starting container with interactive shell...'
+      line_break
+      docker start -ai "${container_name}"
+      exit 0
+    else
+      echo 'starting container...'
+      line_break
+      docker start "${container_name}"
+      docker exec -it "${container_name}" "$@"
+      exit 0
+    fi
+  else
+    # container is running, simply run command
+    if [ $# -eq 0 ] ; then
+      echo 'starting interactive shell...'
+      docker exec -it "${container_name}" /bin/bash
+    else
+      echo "command: $@"
+      docker exec -it "${container_name}" "$@"
+    fi
+  fi
+else
+  echo "starting new dev container $container_name"
+  line_break
+  docker run -it \
+    --name "$container_name" \
+    -v ~/.config/nvim:/root/.config/nvim/ \
+    -v /etc/aurae:/etc/aurae \
+    -v .:/aurae \
+    aurae/dev:latest "$@"
+fi
