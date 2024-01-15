@@ -76,7 +76,7 @@ echo " -> Verify Server Material (Root CA): server.csr..."
 openssl verify -CAfile "./pki/ca.crt" "./pki/_signed.server.crt" 1>/dev/null && echo " -> Root Verification: Success!"
 
 # Client <nova>
-. ./hack/certgen-client nova
+. ./hack/certgen-client "${USER}"
 
 # Client <unsafe>
 . ./hack/certgen-client unsafe
